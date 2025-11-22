@@ -31,5 +31,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDMEM1QjMxNTZFQTQ0NTEKUldSUlJPcFdNVnNNVENCUjFaVEVGZDkyUHZ5L3N4MWtaN1lXbm1SdGIvaC96TzFTZEhuVFphdkcK",
+      "endpoints": [
+        "https://github.com/Reynadi531/time-manager-sea/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
