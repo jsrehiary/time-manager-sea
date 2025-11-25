@@ -1,7 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "Inter";
+  src: local("Inter"),
+  url("/Inter.ttf") format("truetype");
+}
+
 @custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-purple-brand: #1E1530;
+  --color-purple-brand-f: #322350;
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -42,6 +53,7 @@
 }
 
 :root {
+  --font-sans: "Inter", sans-serif; 
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -66,12 +78,12 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar: var(--color-purple-brand);
+  --sidebar-foreground: var(--color-white);
   --sidebar-primary: hsl(240 5.9% 10%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-accent: #322350;
+  --sidebar-accent-foreground: var(--color-white);
   --sidebar-border: hsl(220 13% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
