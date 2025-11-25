@@ -7,8 +7,9 @@ import {
   KanbanCards,
   KanbanHeader,
   KanbanProvider,
-} from '@/components/ui/shadcn-io/kanban';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "@/components/ui/shadcn-io/kanban";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -51,20 +52,23 @@ function Index() {
   return (
     <>
       <Layout>
-        <KanbanProvider
-          className="h-full"
-          columns={columns}
-          data={features}
-        >
+        <KanbanProvider className="h-full" columns={columns} data={features}>
           {(column) => (
             <KanbanBoard id={column.id} key={column.id}>
               <KanbanHeader>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: column.color }}
-                  />
-                  <span>{column.name}</span>
+                <div className="flex flex-row">
+                  <div className="flex-1 flex items-center gap-2">
+                    <div
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: column.color }}
+                    />
+                    <span>{column.name}</span>
+                  </div>
+                  <div className="flex">
+                    <Button className="bg-purple-brand hover:bg-purple-brand-f hover:text-white" variant="default" size="sm">
+                      + Add Task
+                    </Button>
+                  </div>
                 </div>
               </KanbanHeader>
               <KanbanCards id={column.id}>
