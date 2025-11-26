@@ -79,14 +79,14 @@ function Index() {
                     key={feature.id}
                     name={feature.name}
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2 h-12 mb-1">
                       <div className="flex flex-col gap-1">
                         <p className="m-0 flex-1 font-medium text-sm">
                           {feature.name}
                         </p>
                       </div>
                       {feature.owner && (
-                        <Avatar className="h-4 w-4 shrink-0">
+                        <Avatar className="h-6 w-6 shrink-0">
                           <AvatarImage src={feature.owner.image} />
                           <AvatarFallback>
                             {feature.owner.name?.slice(0, 2)}
