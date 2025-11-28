@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
+import { useEffect, useState } from 'react';
+import { boardApi, columnApi, taskApi, Board, Column, Task } from '@/lib/api';
 import { createFileRoute } from "@tanstack/react-router";
-import { faker } from "@faker-js/faker";
 import {
   KanbanBoard,
   KanbanCard,
@@ -15,95 +16,160 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-const columns = [
-  { id: faker.string.uuid(), name: "Planned", color: "#6B7280" },
-  { id: faker.string.uuid(), name: "In Progress", color: "#F59E0B" },
-  { id: faker.string.uuid(), name: "Done", color: "#10B981" },
-];
-const users = Array.from({ length: 4 })
-  .fill(null)
-  .map(() => ({
-    id: faker.string.uuid(),
-    name: faker.person.fullName(),
-    image: faker.image.avatar(),
-  }));
-const features = Array.from({ length: 20 })
-  .fill(null)
-  .map(() => ({
-    id: faker.string.uuid(),
-    name: capitalize(faker.company.buzzPhrase()),
-    startAt: faker.date.past({ years: 0.5, refDate: new Date() }),
-    endAt: faker.date.future({ years: 0.5, refDate: new Date() }),
-    column: faker.helpers.arrayElement(columns).id,
-    owner: faker.helpers.arrayElement(users),
-  }));
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
 
 function Index() {
+  const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
+  const [columns, setColumns] = useState<Column[]>([]);
+  const [tasksByColumn, setTasksByColumn] = useState<Record<number, Task[]>>({});
+  const [newBoardName, setNewBoardName] = useState("");
+
+
+  useEffect(() => {
+    loadBoards();
+  }, []);
+
+  useEffect(() => {
+    if (selectedBoard) {
+      loadColumns(selectedBoard.id);
+    }
+  }, [selectedBoard]);
+
+  const loadBoards = async () => {
+    const data = await boardApi.getAll();
+    setBoards(data);
+    if (data.length > 0) {
+      setSelectedBoard(data[0]);
+    }
+  };
+
+  const loadColumns = async (boardId: number) => {
+    const cols = await columnApi.getByBoard(boardId);
+    setColumns(cols);
+
+    // Load tasks for each column
+    const tasksMap: Record<number, Task[]> = {};
+    for (const col of cols) {
+      tasksMap[col.id] = await taskApi.getByColumn(col.id);
+    }
+    setTasksByColumn(tasksMap);
+  };
+
+  const createBoard = async (name: string) => {
+    const newBoard = await boardApi.create(name);
+    setBoards([...boards, newBoard]);
+  };
+
+  const createTask = async (columnId: number, title: string) => {
+    const tasks = tasksByColumn[columnId] || [];
+    const newTask = await taskApi.create(columnId, title, tasks.length);
+    setTasksByColumn({
+      ...tasksByColumn,
+      [columnId]: [...tasks, newTask],
+    });
+  };
+
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+
+
   return (
     <>
       <Layout>
-        <KanbanProvider className="h-full" columns={columns} data={features}>
-          {(column) => (
-            <KanbanBoard id={column.id} key={column.id}>
-              <KanbanHeader>
-                <div className="flex flex-row">
-                  <div className="flex-1 flex items-center gap-2">
-                    <div
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: column.color }}
-                    />
-                    <span>{column.name}</span>
-                  </div>
-                  <div className="flex">
-                    <Button className="bg-purple-brand hover:bg-purple-brand-f hover:text-white" variant="default" size="sm">
+        <div className="container">
+          <KanbanProvider
+            className="h-full"
+            columns={columns.map((col) => ({
+              id: col.id.toString(),
+              name: col.name,
+              color:
+                col.name.toLowerCase() === "to do"
+                  ? "#6B7280"
+                  : col.name.toLowerCase() === "in progress"
+                    ? "#F59E0B"
+                    : col.name.toLowerCase() === "done"
+                      ? "#10B981"
+                      : "#6B7280", // default gray
+            }))}
+            data={Object.values(tasksByColumn)
+              .flat()
+              .map((task) => ({
+                id: task.id.toString(),
+                name: task.title,
+                column: task.column_id.toString(),
+                description: task.description,
+                dueDate: task.due_date ? new Date(task.due_date) : null,
+                priority: task.priority,
+              }))}
+          >
+            {(column) => (
+              <KanbanBoard id={column.id} key={column.id}>
+                <KanbanHeader>
+                  <div className="flex flex-row justify-between items-center">
+                    <div className="flex gap-2 items-center">
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: column.color }}
+                      />
+                      <span>{column.name}</span>
+                    </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => createTask(parseInt(column.id), column.name)}
+                    >
                       + Add Task
                     </Button>
                   </div>
-                </div>
-              </KanbanHeader>
-              <KanbanCards id={column.id}>
-                {(feature: (typeof features)[number]) => (
-                  <KanbanCard
-                    column={column.id}
-                    id={feature.id}
-                    key={feature.id}
-                    name={feature.name}
-                  >
-                    <div className="flex items-start justify-between gap-2 h-12 mb-1">
-                      <div className="flex flex-col gap-1">
-                        <p className="m-0 flex-1 font-medium text-sm">
-                          {feature.name}
-                        </p>
-                      </div>
-                      {feature.owner && (
-                        <Avatar className="h-6 w-6 shrink-0">
-                          <AvatarImage src={feature.owner.image} />
-                          <AvatarFallback>
-                            {feature.owner.name?.slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                    </div>
-                    <p className="m-0 text-muted-foreground text-xs">
-                      {shortDateFormatter.format(feature.startAt)} -{" "}
-                      {dateFormatter.format(feature.endAt)}
-                    </p>
-                  </KanbanCard>
-                )}
-              </KanbanCards>
-            </KanbanBoard>
-          )}
-        </KanbanProvider>
+                </KanbanHeader>
+
+                <KanbanCards id={column.id}>
+                  {(item) => {
+                    const task = Object.values(tasksByColumn)
+                      .flat()
+                      .find((t) => t.id.toString() === item.id)!;
+
+                    return (
+                      <KanbanCard
+                        column={item.column}
+                        id={item.id}
+                        key={item.id}
+                        name={item.name}
+                      >
+                        <div className="flex flex-col gap-1 mb-1">
+                          <p className="m-0 flex-1 font-medium text-sm">{task.title}</p>
+                          {task.description && (
+                            <p className="text-muted-foreground text-xs">
+                              {task.description}
+                            </p>
+                          )}
+                        </div>
+                        {task.due_date && (
+                          <p className="m-0 text-muted-foreground text-xs">
+                            {shortDateFormatter.format(new Date(task.due_date))}
+                          </p>
+                        )}
+                      </KanbanCard>
+                    );
+                  }}
+                </KanbanCards>
+              </KanbanBoard>
+            )}
+          </KanbanProvider>
+        </div>
+
+
       </Layout>
     </>
   );
