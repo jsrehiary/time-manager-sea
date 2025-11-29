@@ -9,8 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TimesheetRouteImport } from './routes/timesheet'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as MyTaskRouteImport } from './routes/my-task'
+import { Route as CalenderRouteImport } from './routes/calender'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TimesheetRoute = TimesheetRouteImport.update({
+  id: '/timesheet',
+  path: '/timesheet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyTaskRoute = MyTaskRouteImport.update({
+  id: '/my-task',
+  path: '/my-task',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalenderRoute = CalenderRouteImport.update({
+  id: '/calender',
+  path: '/calender',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +43,72 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calender': typeof CalenderRoute
+  '/my-task': typeof MyTaskRoute
+  '/reports': typeof ReportsRoute
+  '/timesheet': typeof TimesheetRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calender': typeof CalenderRoute
+  '/my-task': typeof MyTaskRoute
+  '/reports': typeof ReportsRoute
+  '/timesheet': typeof TimesheetRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calender': typeof CalenderRoute
+  '/my-task': typeof MyTaskRoute
+  '/reports': typeof ReportsRoute
+  '/timesheet': typeof TimesheetRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/calender' | '/my-task' | '/reports' | '/timesheet'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/calender' | '/my-task' | '/reports' | '/timesheet'
+  id: '__root__' | '/' | '/calender' | '/my-task' | '/reports' | '/timesheet'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalenderRoute: typeof CalenderRoute
+  MyTaskRoute: typeof MyTaskRoute
+  ReportsRoute: typeof ReportsRoute
+  TimesheetRoute: typeof TimesheetRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/timesheet': {
+      id: '/timesheet'
+      path: '/timesheet'
+      fullPath: '/timesheet'
+      preLoaderRoute: typeof TimesheetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-task': {
+      id: '/my-task'
+      path: '/my-task'
+      fullPath: '/my-task'
+      preLoaderRoute: typeof MyTaskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calender': {
+      id: '/calender'
+      path: '/calender'
+      fullPath: '/calender'
+      preLoaderRoute: typeof CalenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +121,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalenderRoute: CalenderRoute,
+  MyTaskRoute: MyTaskRoute,
+  ReportsRoute: ReportsRoute,
+  TimesheetRoute: TimesheetRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

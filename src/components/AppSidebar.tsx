@@ -20,22 +20,22 @@ const items = [
   },
   {
     title: "My Task",
-    url: "#",
+    url: "/my-task",
     icon: Pencil,
   },
   {
     title: "Calender",
-    url: "#",
+    url: "/calender",
     icon: Calendar,
   },
   {
     title: "Timesheet",
-    url: "#",
+    url: "/timesheet",
     icon: Clock,
   },
   {
     title: "Reports",
-    url: "#",
+    url: "/reports",
     icon: Mail,
   },
 ]
