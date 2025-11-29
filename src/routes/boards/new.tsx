@@ -1,60 +1,51 @@
 import Layout from "@/components/Layout";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { boardApi } from "@/lib/api";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/boards/new")({
-    component: NewBoardModal,
+  component: NewBoardModal,
 });
 
 function NewBoardModal() {
-    const navigate = useNavigate();
-    const [name, setName] = useState("");
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
 
-    // Tutup modal saat klik backdrop
-    const close = () => navigate({ to: "/" });
+  const close = () => navigate({ to: "/" });
 
-    const createBoard = async () => {
-        if (!name.trim()) return;
-        await boardApi.create(name);
-        close();
-    };
+  const createBoard = async () => {
+    if (!name.trim()) return;
+    await boardApi.create(name);
+    close();
+  };
 
-    return (
-        <Layout>
-            <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                    className="absolute inset-0"
-                    onClick={close}
-                />
+  return (
+    <Layout>
+      <Dialog open={true} onOpenChange={close}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Board</DialogTitle>
+          </DialogHeader>
 
-                <div className="relative bg-white p-6 w-full max-w-md rounded shadow-xl">
-                    <h1 className="text-lg font-bold mb-4">Create New Board</h1>
+          <input
+            className="border p-2 w-full mb-4 rounded"
+            placeholder="Board name..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
-                    <input
-                        className="border p-2 w-full mb-4 rounded"
-                        placeholder="Board name..."
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-
-                    <div className="flex justify-end gap-2">
-                        <button
-                            className="px-4 py-2 bg-gray-200 rounded"
-                            onClick={close}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            className="px-4 py-2 bg-blue-600 text-white rounded"
-                            onClick={createBoard}
-                        >
-                            Create
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Layout>
-    );
+          <DialogFooter>
+            <Button variant="secondary" onClick={close}>
+              Cancel
+            </Button>
+            <Button variant="default" onClick={createBoard}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Layout>
+  );
 }
