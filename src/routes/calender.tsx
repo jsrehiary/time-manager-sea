@@ -1,155 +1,147 @@
-import Layout from '@/components/Layout'
-import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { taskApi, columnApi, boardApi, Task, Column, Board } from '@/lib/api'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import Layout from "@/components/Layout";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { taskApi } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { Task } from "@/lib/api";
 
-export const Route = createFileRoute('/calender')({
+export const Route = createFileRoute("/calender")({
   component: RouteComponent,
-})
+});
 
 interface DayTasks {
-  date: Date
-  tasks: Task[]
+  date: Date;
+  tasks: Task[];
 }
 
 function RouteComponent() {
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [allTasks, setAllTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
-  const [columns, setColumns] = useState<Column[]>([])
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  useEffect(() => {
-    loadAllTasks()
-  }, [])
-
-  const loadAllTasks = async () => {
-    try {
-      setLoading(true)
-      const boards = await boardApi.getAll()
-      
-      const allColumnsPromises = boards.map(board => columnApi.getByBoard(board.id))
-      const allColumnsArrays = await Promise.all(allColumnsPromises)
-      const flatColumns = allColumnsArrays.flat()
-      setColumns(flatColumns)
-
-      const allTasksPromises = flatColumns.map(column => taskApi.getByColumn(column.id))
-      const allTasksArrays = await Promise.all(allTasksPromises)
-      const flatTasks = allTasksArrays.flat()
-      
-      // Filter tasks that have due dates
-      const tasksWithDates = flatTasks.filter(task => task.due_date)
-      setAllTasks(tasksWithDates)
-    } catch (error) {
-      console.error('Error loading tasks:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    data: tasks = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: taskApi.getAllTasks,
+  });
 
   const getMonthName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  }
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  };
 
   const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
 
-    return { daysInMonth, startingDayOfWeek, firstDay }
-  }
+    return { daysInMonth, startingDayOfWeek, firstDay };
+  };
 
   const getTasksForDate = (date: Date): Task[] => {
-    return allTasks.filter(task => {
-      if (!task.due_date) return false
-      const taskDate = new Date(task.due_date)
-      return (
-        taskDate.getDate() === date.getDate() &&
-        taskDate.getMonth() === date.getMonth() &&
-        taskDate.getFullYear() === date.getFullYear()
-      )
-    })
-  }
+    return (
+      tasks?.filter((task) => {
+        if (!task.due_date) return false;
+        const taskDate = new Date(task.due_date);
+        return (
+          taskDate.getDate() === date.getDate() &&
+          taskDate.getMonth() === date.getMonth() &&
+          taskDate.getFullYear() === date.getFullYear()
+        );
+      }) || []
+    );
+  };
 
   const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
-  }
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+    );
+  };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
-  }
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    );
+  };
 
   const goToToday = () => {
-    setCurrentDate(new Date())
-  }
+    setCurrentDate(new Date());
+  };
 
   const isToday = (date: Date) => {
-    const today = new Date()
+    const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
-    )
-  }
+    );
+  };
 
   const isPastDate = (date: Date) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return date < today
-  }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
 
   const renderCalendar = () => {
-    const { daysInMonth, startingDayOfWeek, firstDay } = getDaysInMonth(currentDate)
-    const days = []
+    const { daysInMonth, startingDayOfWeek, firstDay } =
+      getDaysInMonth(currentDate);
+    const days = [];
 
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(
         <div key={`empty-${i}`} className="bg-gray-50 border border-gray-200" />
-      )
+      );
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(firstDay.getFullYear(), firstDay.getMonth(), day)
-      const tasksForDay = getTasksForDate(date)
-      const isCurrentDay = isToday(date)
-      const isPast = isPastDate(date)
+      const date = new Date(firstDay.getFullYear(), firstDay.getMonth(), day);
+      const tasksForDay = getTasksForDate(date);
+      const isCurrentDay = isToday(date);
+      const isPast = isPastDate(date);
 
       days.push(
         <div
           key={day}
           className={`bg-white border border-gray-200 p-1 sm:p-2 overflow-hidden hover:bg-purple-50 transition-colors flex flex-col ${
-            isCurrentDay ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' : ''
+            isCurrentDay
+              ? "bg-purple-100 border-purple-400 ring-2 ring-purple-300"
+              : ""
           }`}
         >
-          <div className={`text-xs sm:text-sm font-semibold mb-1 shrink-0 ${
-            isCurrentDay ? 'text-purple-700' : isPast ? 'text-gray-400' : 'text-gray-700'
-          }`}>
+          <div
+            className={`text-xs sm:text-sm font-semibold mb-1 shrink-0 ${
+              isCurrentDay
+                ? "text-purple-700"
+                : isPast
+                  ? "text-gray-400"
+                  : "text-gray-700"
+            }`}
+          >
             {day}
           </div>
           <div className="space-y-0.5 flex-1 overflow-y-auto overflow-x-hidden">
-            {tasksForDay.slice(0, 2).map(task => {
-              const column = columns.find(col => col.id === task.column_id)
-              return (
-                <div
-                  key={task.id}
-                  className={`text-[9px] sm:text-[10px] lg:text-xs p-0.5 sm:p-1 rounded truncate shadow-sm ${
-                    task.priority === 'high'
-                      ? 'bg-red-100 text-red-800 border border-red-300'
-                      : task.priority === 'medium'
-                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                      : 'bg-purple-50 text-purple-700 border border-purple-200'
-                  }`}
-                  title={task.title}
-                >
-                  {task.title}
-                </div>
-              )
-            })}
+            {tasksForDay.slice(0, 2).map((task) => (
+              <div
+                key={task.id}
+                className={`text-[9px] sm:text-[10px] lg:text-xs p-0.5 sm:p-1 rounded truncate shadow-sm ${
+                  task.priority === "high"
+                    ? "bg-red-100 text-red-800 border border-red-300"
+                    : task.priority === "medium"
+                      ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                      : "bg-purple-50 text-purple-700 border border-purple-200"
+                }`}
+                title={task.title}
+              >
+                {task.title}
+              </div>
+            ))}
             {tasksForDay.length > 2 && (
               <div className="text-[9px] sm:text-[10px] lg:text-xs text-gray-500 pl-0.5 sm:pl-1">
                 +{tasksForDay.length - 2} more
@@ -157,20 +149,20 @@ function RouteComponent() {
             )}
           </div>
         </div>
-      )
+      );
     }
 
-    return days
-  }
+    return days;
+  };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-zinc-400">Loading calendar...</div>
         </div>
       </Layout>
-    )
+    );
   }
 
   return (
@@ -216,7 +208,7 @@ function RouteComponent() {
         </div>
         <Card className="bg-white border-purple-200 p-2 sm:p-4 flex-1 flex flex-col overflow-hidden shadow-lg">
           <div className="grid grid-cols-7 gap-px mb-px flex-shrink-0">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div
                 key={day}
                 className="text-center text-xs sm:text-sm font-semibold text-purple-700 py-1 sm:py-2 bg-purple-100"
@@ -246,5 +238,5 @@ function RouteComponent() {
         </div>
       </div>
     </Layout>
-  )
+  );
 }
