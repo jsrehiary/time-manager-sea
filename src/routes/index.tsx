@@ -7,6 +7,7 @@ import {
   KanbanCards,
   KanbanCard,
   KanbanItemProps,
+  DragEndEvent,
 } from "@/components/ui/shadcn-io/kanban";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -34,9 +35,9 @@ import { taskApi } from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const PERMANENT_COLUMNS = [
-  { id: 1, name: "To Do", color: "#3b82f6" },
-  { id: 2, name: "In Progress", color: "#eab308" },
-  { id: 3, name: "Done", color: "#22c55e" },
+  { id: "to_do", name: "To Do", color: "#3b82f6" },
+  { id: "in_progress", name: "In Progress", color: "#eab308" },
+  { id: "done", name: "Done", color: "#22c55e" },
 ];
 
 const statusLookup = (id: number) => {
@@ -83,23 +84,13 @@ function KanbanPage() {
     },
   });
 
-  const updateTaskMutation = useMutation({
-    mutationFn: async ({
-      taskId,
-      newStatus,
-    }: {
-      taskId: number;
-      newStatus: string;
-    }) => {
-      return await taskApi.updateStatus(taskId, newStatus);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["all-tasks"] });
-    },
-    onError: (error) => {
-      console.error("Error updating task:", error);
-    },
-  });
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    await taskApi.updateStatus(Number(active.id), over?.id as string);
+
+    queryClient.invalidateQueries({ queryKey: ["all-tasks"] });
+  };
 
   const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +140,7 @@ function KanbanPage() {
     data?.map((task) => ({
       id: task.id.toString(),
       name: task.title,
-      column: statusReverseLookup(task.status).toString(),
+      column: task.status,
     })) || [];
 
   return (
@@ -163,6 +154,7 @@ function KanbanPage() {
               color: c.color,
             }))}
             data={kanbanData}
+            onDragEnd={handleDragEnd}
           >
             {(column) => (
               <KanbanBoard id={column.id} key={column.id} className="h-[90vh]">
